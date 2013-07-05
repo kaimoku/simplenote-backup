@@ -9,6 +9,10 @@ import sqlite3
 from os.path import expanduser
 
 
+def init():
+    # get configuration file path
+    config_file = expanduser(" ") + ".config/"
+
 def dbexists():
     if os.path.isfile(path_to_file):
         try:
@@ -54,6 +58,7 @@ def showoptions():
         print "No options to show"
 
 def main():
+    init()
     parseOptions()
 
 
