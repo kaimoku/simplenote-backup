@@ -55,6 +55,14 @@ def showoptions():
     else:
         print "No options to show"
 
+
+def dltoptions():
+    if dbexists():
+        print "delete options"
+    else:
+        print "no options to delete"
+
+
 def main():
     init()
     parseOptions()
