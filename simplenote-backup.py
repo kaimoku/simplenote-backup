@@ -11,7 +11,7 @@ from os.path import expanduser
 
 def init():
     # get configuration file path
-    config_file = expanduser(" ") + ".config/"
+    config_file = expanduser("~/.config/simplenote-backup.db")
 
 def dbexists():
     if os.path.isfile(path_to_file):
