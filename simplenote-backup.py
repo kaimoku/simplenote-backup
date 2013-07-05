@@ -11,11 +11,42 @@ from os.path import expanduser, isfile
 
 def init():
     # get configuration file path
-    config_file = expanduser("~/.config/simplenote-backup.db")
+    global db_file
+    db_file = expanduser("~/.config/simplenote-backup.db")
+    
+    #setup options_table
+    global options_table
+    options_table = "options"
+    
+    # setup sqlite3 connection/cursor
+    global conn, c
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
 
+
+def cleanup(num):
+    conn.close()
+    sys.exit(num)
+    
 
 def dbexists():
-    return isfile(config_file)
+    "Returns True if db_file exists"
+    return isfile(db_file)
+
+
+def tableexists(table_name):
+    "Returns True if <table_name> exists as a table in db_file"
+    ret = False
+    c.execute("select 1 from sqlite_master where type='table' and name = ?", [table_name])
+    if c.fetchone():
+        ret = True
+    return ret
+
+
+def createtable(table_name):
+    "Creates the table given by <table_name>"
+    if table_name == options_table:
+        c.execute("create table %s (username text, password text, save_directory text)" % (options_table))
 
 
 def parseOptions():
@@ -39,19 +70,27 @@ def parseOptions():
     (options, args) = parser.parse_args()
     if options.save_opts:
         print "Save the options"
+        saveoptions()
     if options.dlt_opts:
         print "Delete the options"
         dltoptions()
-        sys.exit(0)
+        cleanup(0)
     if options.show_opts:
         print "Show the options"
         showoptions()
-        sys.exit(0)
+        cleanup(0)
 
+
+def saveoptions():
+    "Save the options to the <db_file>"
+    if not tableexists(options_table):
+        createtable(options_table)
+        
 
 def showoptions():
-    if dbexists():
+    if tableexists(options_table):
         print "show options"
+        
     else:
         print "No options to show"
 
@@ -66,6 +105,8 @@ def dltoptions():
 def main():
     init()
     parseOptions()
+    
+    cleanup(0)
 
 
 if __name__ == "__main__":
