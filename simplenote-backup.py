@@ -6,20 +6,16 @@ except ImportError:
 import sys
 import optparse
 import sqlite3
-from os.path import expanduser
+from os.path import expanduser, isfile
 
 
 def init():
     # get configuration file path
     config_file = expanduser("~/.config/simplenote-backup.db")
 
+
 def dbexists():
-    if os.path.isfile(path_to_file):
-        try:
-            open(path_to_file)
-        except IOError:
-            return False
-    return True
+    return isfile(config_file)
 
 
 def parseOptions():
@@ -46,9 +42,11 @@ def parseOptions():
     if options.dlt_opts:
         print "Delete the options"
         dltoptions()
+        sys.exit(0)
     if options.show_opts:
         print "Show the options"
         showoptions()
+        sys.exit(0)
 
 
 def showoptions():
