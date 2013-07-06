@@ -44,9 +44,15 @@ def tableexists(table_name):
 
 
 def createtable(table_name):
-    "Creates the table given by <table_name>"
+    """Creates the table given by <table_name>
+    Adds a single row to the options table if it doesn't exist. """
     if table_name == options_table:
         c.execute("create table %s (username text, password text, save_directory text)" % (options_table))
+    c.execute("""select count(*) from %s""" % (options_table))
+    if c.fetchone() == 0:
+        c.execute("""insert into %s (username, password, save_directory)
+                     values(' ', ' ', ' ')""" % (options_table))
+        c.commit()
 
 
 def parseOptions():
@@ -67,6 +73,7 @@ def parseOptions():
     parser.add_option("--show", action="store_true", dest="show_opts",
                       default=False, help="Show saved options")
 
+    global options
     (options, args) = parser.parse_args()
     if options.save_opts:
         print "Save the options"
@@ -85,6 +92,10 @@ def saveoptions():
     "Save the options to the <db_file>"
     if not tableexists(options_table):
         createtable(options_table)
+    stmt = "update " + options_table + " set "
+    if options.username != None:
+        stmt += " username = " + options.username
+    
         
 
 def showoptions():
