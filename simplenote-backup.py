@@ -4,7 +4,7 @@ except ImportError:
     print 'simplenote.py needed for use.\nPlease run pip install simplenote'
     sys.exit(1)
 import sys
-import optparse
+import argparse
 import sqlite3
 import textwrap
 from os.path import expanduser, isfile
@@ -14,11 +14,11 @@ def init():
     # get configuration file path
     global db_file
     db_file = expanduser("~/.config/simplenote-backup.db")
-    
+
     #setup options_table
     global options_table
     options_table = "options"
-    
+
     # setup sqlite3 connection/cursor
     global conn, c
     conn = sqlite3.connect(db_file)
@@ -29,7 +29,7 @@ def init():
 def cleanup(num):
     conn.close()
     sys.exit(num)
-    
+
 
 def dbexists():
     "Returns True if db_file exists"
@@ -59,30 +59,31 @@ def createtable(table_name):
 
 def parseOptions():
     usage = "usage: %prog [options]"
-    formatter = optparse.IndentedHelpFormatter(width=80, max_help_position=80)
-    parser = optparse.OptionParser(usage=usage, formatter=formatter)
-    parser.add_option("-u", "--user", action="store", dest="username",
+    #formatter = optparse.IndentedHelpFormatter(width=80, max_help_position=80)
+    parser = argparse.ArgumentParser(formatter_class=lambda prog: 
+                      argparse.HelpFormatter(prog, max_help_position=80))
+    parser.add_argument("-u", "--user", action="store", dest="username",
                       metavar="USERNAME", help="Simplenote Username")
-    parser.add_option("-p", "--password", action="store", dest="password",
+    parser.add_argument("-p", "--password", action="store", dest="password",
                       metavar="PASSWORD", help="Simplenote Password")
-    parser.add_option("-d", "--directory", action="store", dest="note_dir",
+    parser.add_argument("-d", "--directory", action="store", dest="note_dir",
                       metavar="PATH", help="Where to save notes")
-    parser.add_option("-s", "--save", action="store_true", dest="save_opts",
+    parser.add_argument("-s", "--save", action="store_true", dest="save_opts",
                       default=False,
                       help="Save entered options [default=False]")
-    parser.add_option("--delete", action="store_true", dest="dlt_opts",
+    parser.add_argument("--delete", action="store_true", dest="dlt_opts",
                       default=False, help="Delete saved options")
-    parser.add_option("--show", action="store_true", dest="show_opts",
+    parser.add_argument("--show", action="store_true", dest="show_opts",
                       default=False, help="Show saved options")
 
-    global options
-    (options, args) = parser.parse_args()
-    if options.save_opts:
+    global args
+    args = parser.parse_args()
+    if args.save_opts:
         saveoptions()
-    if options.dlt_opts:
+    if args.dlt_opts:
         dltoptions()
         cleanup(0)
-    if options.show_opts:
+    if args.show_opts:
         showoptions()
         cleanup(0)
 
@@ -93,14 +94,14 @@ def saveoptions():
         createtable(options_table)
     update_required = False
     stmt = "update " + options_table + " set "
-    if options.username != None:
-        stmt += " username = '" + options.username + "',"
+    if args.username is not None:
+        stmt += " username = '" + args.username + "',"
         update_required = True
-    if options.password != None:
-        stmt += " password = '" + options.password + "',"
+    if args.password is not None:
+        stmt += " password = '" + args.password + "',"
         update_required = True
-    if options.note_dir != None:
-        stmt += " save_directory = '" + options.note_dir + "'"
+    if args.note_dir is not None:
+        stmt += " save_directory = '" + args.note_dir + "'"
         update_required = True
     if update_required:
         if stmt[-1:] == ",":
@@ -119,12 +120,12 @@ def showoptions():
         row = c.fetchone()
         output = textwrap.dedent("""\
                  Saved options
-                    username: %s 
-                    password: %s 
-                    save directory: %s """ % 
-                    (row["username"], row["password"], row["save_directory"]))
+                    username: %s
+                    password: %s
+                    save directory: %s """ %
+                 (row["username"], row["password"], row["save_directory"]))
         print output
-        
+
     else:
         print "No options to show"
 
@@ -143,7 +144,7 @@ def dltoptions():
 def main():
     init()
     parseOptions()
-    
+
     cleanup(0)
 
 
