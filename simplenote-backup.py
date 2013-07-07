@@ -3,10 +3,11 @@ try:
 except ImportError:
     print 'simplenote.py needed for use.\nPlease run pip install simplenote'
     sys.exit(1)
-import sys
+import sys, os
 import argparse
 import sqlite3
 import textwrap
+import getpass
 from os.path import expanduser, isfile
 
 
@@ -144,10 +145,31 @@ def dltoptions():
         print "No options to delete"
 
 
+def setparams(in_username, in_password, in_note_dir):
+    if in_username is None:
+        username = raw_input('Enter Simplenote Username: ')
+    else:
+        username = in_username
+    
+    if in_password is None:
+        password = getpass.getpass(prompt="Enter Simplenote Password: ")
+    else:
+        password = in_password
+
+    if in_note_dir is None:
+        note_dir = os.getcwd()
+    else:
+        note_dir = in_note_dir
+    
+    return username, password, note_dir
+
+
 def main():
     init()
     in_username, in_password, in_note_dir = parseOptions()
-
+    username, password, note_dir = setparams(in_username, in_password, in_note_dir)
+    
+    
     cleanup(0)
 
 
