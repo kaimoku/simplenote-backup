@@ -39,7 +39,8 @@ def dbexists():
 def tableexists(table_name):
     "Returns True if <table_name> exists as a table in db_file"
     ret = False
-    c.execute("select 1 from sqlite_master where type='table' and name = ?", [table_name])
+    c.execute("""select 1 from sqlite_master
+                 where type='table' and name = ?""", [table_name])
     if c.fetchone() is not None:
         ret = True
     return ret
@@ -49,7 +50,9 @@ def createtable(table_name):
     """Creates the table given by <table_name>
        Adds a single row to the options table if it doesn't exist. """
     if table_name == options_table:
-        c.execute("create table %s (username text, password text, save_directory text)" % (options_table))
+        c.execute("""create table %s
+                     (username text, password text, save_directory text)"""
+                  % (options_table))
     c.execute("""select count(*) from %s""" % (options_table))
     if c.fetchone() is not None:
         c.execute("""insert into %s (username, password, save_directory)
@@ -60,48 +63,48 @@ def createtable(table_name):
 def parseOptions():
     usage = "usage: %prog [options]"
     #formatter = optparse.IndentedHelpFormatter(width=80, max_help_position=80)
-    parser = argparse.ArgumentParser(formatter_class=lambda prog: 
-                      argparse.HelpFormatter(prog, max_help_position=80))
+    parser = argparse.ArgumentParser(formatter_class=lambda prog:
+                                     argparse.HelpFormatter(prog, max_help_position=80))
     parser.add_argument("-u", "--user", action="store", dest="username",
-                      metavar="USERNAME", help="Simplenote Username")
+                        metavar="USERNAME", help="Simplenote Username")
     parser.add_argument("-p", "--password", action="store", dest="password",
-                      metavar="PASSWORD", help="Simplenote Password")
+                        metavar="PASSWORD", help="Simplenote Password")
     parser.add_argument("-d", "--directory", action="store", dest="note_dir",
-                      metavar="PATH", help="Where to save notes")
+                        metavar="PATH", help="Where to save notes")
     parser.add_argument("-s", "--save", action="store_true", dest="save_opts",
-                      default=False,
-                      help="Save entered options [default=False]")
+                        default=False,
+                        help="Save entered options [default=False]")
     parser.add_argument("--delete", action="store_true", dest="dlt_opts",
-                      default=False, help="Delete saved options")
+                        default=False, help="Delete saved options")
     parser.add_argument("--show", action="store_true", dest="show_opts",
-                      default=False, help="Show saved options")
+                        default=False, help="Show saved options")
 
-    global args
     args = parser.parse_args()
     if args.save_opts:
-        saveoptions()
+        saveoptions(args.username, args.password, args.note_dir)
     if args.dlt_opts:
         dltoptions()
         cleanup(0)
     if args.show_opts:
         showoptions()
         cleanup(0)
+    return args.username, args.password, args.note_dir
 
 
-def saveoptions():
+def saveoptions(username, password, note_dir):
     "Save the options to the <db_file>"
     if not tableexists(options_table):
         createtable(options_table)
     update_required = False
     stmt = "update " + options_table + " set "
-    if args.username is not None:
-        stmt += " username = '" + args.username + "',"
+    if username is not None:
+        stmt += " username = '" + username + "',"
         update_required = True
-    if args.password is not None:
-        stmt += " password = '" + args.password + "',"
+    if password is not None:
+        stmt += " password = '" + password + "',"
         update_required = True
-    if args.note_dir is not None:
-        stmt += " save_directory = '" + args.note_dir + "'"
+    if note_dir is not None:
+        stmt += " save_directory = '" + note_dir + "'"
         update_required = True
     if update_required:
         if stmt[-1:] == ",":
@@ -143,7 +146,7 @@ def dltoptions():
 
 def main():
     init()
-    parseOptions()
+    in_username, in_password, in_note_dir = parseOptions()
 
     cleanup(0)
 
