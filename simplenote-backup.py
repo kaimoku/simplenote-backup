@@ -164,10 +164,24 @@ def setparams(in_username, in_password, in_note_dir):
     return username, password, note_dir
 
 
-def savenote(key, note_dir):
+def savenote(content, note_dir):
+    """Save the current note content to the note_dir
+    """
+    newline = content.find('\n')
+    filename = content[:newline]        # should this have a maximum?
+    filename += '.txt'
+    
+    if not os.path.exists(note_dir):
+        os.makedirs(note_dir)
+    
+    with open(os.path.join(note_dir, filename), 'w') as note_file:
+        note_file.write(content)
+        note_file.close()
 
 
 def logsave(key, version, syncnum):
+    """Log the saved note version in db_file, notes_table
+    """
 
 
 def savenotes(username, password, note_dir):
@@ -176,8 +190,11 @@ def savenotes(username, password, note_dir):
     if note_list[1] == 0:
         for note in note_list[0]:
             if note['deleted'] == 0:
-                savenote(note['key'], note_dir)
-                logsave(note['key'], note['version'], note['syncnum'])
+                note_object = sn.get_note(note['key'])
+                if note_object[1] == 0:
+                    note_content = note_object[0]['content']
+                    savenote(note_content, note_dir)
+                    logsave(note['key'], note['version'], note['syncnum'])
     else:
         print "Unable to get note list. Are your credentials correct?"
         cleanup(1)
