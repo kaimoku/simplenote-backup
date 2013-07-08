@@ -164,11 +164,30 @@ def setparams(in_username, in_password, in_note_dir):
     return username, password, note_dir
 
 
+def savenote(key, note_dir):
+
+
+def logsave(key, version, syncnum):
+
+
+def savenotes(username, password, note_dir):
+    sn = Simplenote(username, password)
+    note_list = sn.get_note_list()
+    if note_list[1] == 0:
+        for note in note_list[0]:
+            if note['deleted'] == 0:
+                savenote(note['key'], note_dir)
+                logsave(note['key'], note['version'], note['syncnum'])
+    else:
+        print "Unable to get note list. Are your credentials correct?"
+        cleanup(1)
+
+
 def main():
     init()
     in_username, in_password, in_note_dir = parseOptions()
     username, password, note_dir = setparams(in_username, in_password, in_note_dir)
-    
+    savenotes(username, password, note_dir)
     
     cleanup(0)
 
