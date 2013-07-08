@@ -1,5 +1,5 @@
 try:
-    import simplenote
+    from simplenote import Simplenote
 except ImportError:
     print 'simplenote.py needed for use.\nPlease run pip install simplenote'
     sys.exit(1)
