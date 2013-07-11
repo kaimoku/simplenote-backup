@@ -19,6 +19,10 @@ def init():
     #setup options_table
     global options_table
     options_table = "options"
+    
+    # setup notes_table
+    global notes_table
+    notes_table = "notes"
 
     # setup sqlite3 connection/cursor
     global conn, c
@@ -54,11 +58,15 @@ def createtable(table_name):
         c.execute("""create table %s
                      (username text, password text, save_directory text)"""
                   % (options_table))
-    c.execute("""select count(*) from %s""" % (options_table))
-    if c.fetchone() is not None:
-        c.execute("""insert into %s (username, password, save_directory)
-                  values(' ', ' ', ' ')""" % (options_table))
-        conn.commit()
+        c.execute("""select count(*) from %s""" % (options_table))
+        if c.fetchone() is not None:
+            c.execute("""insert into %s (username, password, save_directory)
+                      values(' ', ' ', ' ')""" % (options_table))
+            conn.commit()
+    else if table_name == notes_table:
+        c.execute("""create table %s
+                     (key text primary key, version integer, syncnum integer)"""
+                  % (notes_table)
 
 
 def parseOptions():
@@ -182,6 +190,10 @@ def savenote(content, note_dir):
 def logsave(key, version, syncnum):
     """Log the saved note version in db_file, notes_table
     """
+    if not tableexists(notes_table):
+        createtable(notes_table)
+    c.execute("""insert or replace into %s (key, version, syncnum)
+                 values ( ?, ?, ?)""" % (notes_table), key, version, syncnum)
 
 
 def savenotes(username, password, note_dir):
