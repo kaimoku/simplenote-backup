@@ -15,6 +15,11 @@ def init():
     # get configuration file path
     global db_file
     db_file = expanduser("~/.config/simplenote-backup.db")
+    
+    # setup config directory
+    config_dir = expanduser("~/.config/")
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
 
     #setup options_table
     global options_table
@@ -192,13 +197,15 @@ def logsave(key, version, syncnum):
     """
     if not tableexists(notes_table):
         createtable(notes_table)
-    c.execute("""insert or replace into %s (key, version, syncnum)
-                 values ( ?, ?, ?)""" % (notes_table), key, version, syncnum)
+    stmt = """insert or replace into %s (key, version, syncnum)
+                 values ( ?, ?, ?)""" % (notes_table)
+    c.execute(stmt, key, version, syncnum)
+    conn.commit()
 
 
 def savenotes(username, password, note_dir):
     sn = Simplenote(username, password)
-    note_list = sn.get_note_list()
+    note_list = sn.get_note_list(3)     # remove 3 after testing complete
     if note_list[1] == 0:
         for note in note_list[0]:
             if note['deleted'] == 0:
