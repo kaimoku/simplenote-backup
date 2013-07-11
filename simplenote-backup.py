@@ -19,7 +19,7 @@ def init():
     #setup options_table
     global options_table
     options_table = "options"
-    
+
     # setup notes_table
     global notes_table
     notes_table = "notes"
@@ -63,10 +63,10 @@ def createtable(table_name):
             c.execute("""insert into %s (username, password, save_directory)
                       values(' ', ' ', ' ')""" % (options_table))
             conn.commit()
-    else if table_name == notes_table:
+    elif table_name == notes_table:
         c.execute("""create table %s
-                     (key text primary key, version integer, syncnum integer)"""
-                  % (notes_table)
+                  (key text primary key, version integer, syncnum integer)"""
+                  % (notes_table))
 
 
 def parseOptions():
@@ -158,7 +158,7 @@ def setparams(in_username, in_password, in_note_dir):
         username = raw_input('Enter Simplenote Username: ')
     else:
         username = in_username
-    
+
     if in_password is None:
         password = getpass.getpass(prompt="Enter Simplenote Password: ")
     else:
@@ -168,7 +168,7 @@ def setparams(in_username, in_password, in_note_dir):
         note_dir = os.getcwd()
     else:
         note_dir = in_note_dir
-    
+
     return username, password, note_dir
 
 
@@ -178,10 +178,10 @@ def savenote(content, note_dir):
     newline = content.find('\n')
     filename = content[:newline]        # should this have a maximum?
     filename += '.txt'
-    
+
     if not os.path.exists(note_dir):
         os.makedirs(note_dir)
-    
+
     with open(os.path.join(note_dir, filename), 'w') as note_file:
         note_file.write(content)
         note_file.close()
@@ -217,7 +217,7 @@ def main():
     in_username, in_password, in_note_dir = parseOptions()
     username, password, note_dir = setparams(in_username, in_password, in_note_dir)
     savenotes(username, password, note_dir)
-    
+
     cleanup(0)
 
 
