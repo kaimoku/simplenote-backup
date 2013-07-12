@@ -93,13 +93,16 @@ def parseOptions():
                         default=False, help="Show saved options")
     parser.add_argument("-v", "--verbose", action="store_true",
                         dest="verbose", default=False,
-                        help="Verbose output [defalt=False]")
+                        help="Verbose output [default=False]")
+    parser.add_argument("-q", "--quiet", action="store_true",
+                        dest="quiet", default=False,
+                        help="Suppress all output. Ignored when --show enabled [default=False]")
 
     args = parser.parse_args()
     if args.save_opts:
-        saveoptions(args.username, args.password, args.note_dir)
+        saveoptions(args.username, args.password, args.note_dir, args.quiet)
     if args.dlt_opts:
-        dltoptions()
+        dltoptions(args.quiet)
         cleanup(0)
     if args.show_opts:
         showoptions()
@@ -107,7 +110,7 @@ def parseOptions():
     return args
 
 
-def saveoptions(username, password, note_dir):
+def saveoptions(username, password, note_dir, quiet):
     """Save the options to the <db_file>
     """
     if not tableexists(options_table):
@@ -128,9 +131,11 @@ def saveoptions(username, password, note_dir):
             stmt = stmt[:-1]
         c.execute(stmt)
         conn.commit()
-        print "Options have been saved"
+        if not quiet:
+            print "Options have been saved"
     else:
-        print "Nothing to save"
+        if not quiet:
+            print "Nothing to save"
 
 
 def showoptions():
@@ -156,9 +161,11 @@ def dltoptions():
                      set username = ' ', password = ' ',
                      save_directory = ' '""" % (options_table))
         conn.commit()
-        print "Options have been deleted"
+        if not quiet:
+            print "Options have been deleted"
     else:
-        print "No options to delete"
+        if not quiet:
+            print "No options to delete"
 
 
 def setparams(in_username, in_password, in_note_dir):
