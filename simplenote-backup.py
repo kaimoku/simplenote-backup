@@ -1,14 +1,15 @@
-try:
-    from simplenote import Simplenote
-except ImportError:
-    print 'simplenote.py needed for use.\nPlease run pip install simplenote'
-    sys.exit(1)
-import sys, os
+import sys
+import os
 import argparse
 import sqlite3
 import textwrap
 import getpass
 from os.path import expanduser, isfile
+try:
+    from simplenote import Simplenote
+except ImportError:
+    print 'simplenote.py needed for use.\nPlease run pip install simplenote'
+    sys.exit(1)
 
 
 def init():
@@ -103,7 +104,7 @@ def parseOptions():
     if args.show_opts:
         showoptions()
         cleanup(0)
-    return args.username, args.password, args.note_dir
+    return args
 
 
 def saveoptions(username, password, note_dir):
@@ -202,6 +203,7 @@ def savenote(content, note_dir):
     with open(os.path.join(note_dir, filename), 'w') as note_file:
         note_file.write(content)
         note_file.close()
+    return filename
 
 
 def logsave(key, version, syncnum):
@@ -214,7 +216,7 @@ def logsave(key, version, syncnum):
     conn.commit()
 
 
-def savenotes(username, password, note_dir):
+def savenotes(username, password, note_dir, verbose):
     sn = Simplenote(username, password)
     note_list = sn.get_note_list(3)     # remove 3 after testing complete
     if note_list[1] == 0:
@@ -223,8 +225,10 @@ def savenotes(username, password, note_dir):
                 note_object = sn.get_note(note['key'])
                 if note_object[1] == 0:
                     note_content = note_object[0]['content']
-                    savenote(note_content, note_dir)
+                    filename = savenote(note_content, note_dir)
                     logsave(note['key'], note['version'], note['syncnum'])
+                    if verbose:
+                        print """Note {0} version {1} saved as "{2}" """.format(note['key'], note['version'], filename)
     else:
         print "Unable to get note list. Are your credentials correct?"
         cleanup(1)
@@ -232,9 +236,9 @@ def savenotes(username, password, note_dir):
 
 def main():
     init()
-    in_username, in_password, in_note_dir = parseOptions()
-    username, password, note_dir = setparams(in_username, in_password, in_note_dir)
-    savenotes(username, password, note_dir)
+    args = parseOptions()
+    username, password, note_dir = setparams(args.username, args.password, args.note_dir)
+    savenotes(username, password, note_dir, args.verbose)
 
     cleanup(0)
 
