@@ -159,20 +159,30 @@ def dltoptions():
 
 
 def setparams(in_username, in_password, in_note_dir):
-    if in_username is None:
-        username = raw_input('Enter Simplenote Username: ')
-    else:
+    c.execute("""select username, password, save_directory """ +
+              """from """ + options_table);
+    row = c.fetchone();
+    
+    if in_username is not None:
         username = in_username
-
-    if in_password is None:
-        password = getpass.getpass(prompt="Enter Simplenote Password: ")
+    elif row['username'] != ' ':
+        username = row['username']
     else:
+        username = raw_input('Enter Simplenote Username: ')
+    
+    if in_password is not None:
         password = in_password
-
-    if in_note_dir is None:
-        note_dir = os.getcwd()
+    elif row['password'] != ' ':
+        password = row['password']
     else:
+        password = getpass.getpass(prompt="Enter Simplenote Password: ")
+
+    if in_note_dir is not None:
         note_dir = in_note_dir
+    elif row['save_directory'] != ' ':
+        note_dir = row['save_directory']
+    else:
+        note_dir = os.getcwd()
 
     return username, password, note_dir
 
@@ -197,9 +207,8 @@ def logsave(key, version, syncnum):
     """
     if not tableexists(notes_table):
         createtable(notes_table)
-    stmt = """insert or replace into %s (key, version, syncnum)
-                 values ( ?, ?, ?)""" % (notes_table)
-    c.execute(stmt, key, version, syncnum)
+    c.execute("""insert or replace into """+notes_table+""" (key, version, syncnum)
+                 values (?, ?, ?)""", (key, version, syncnum) )
     conn.commit()
 
 
