@@ -193,8 +193,10 @@ def setparams(in_username, in_password, in_note_dir):
 def savenote(content, note_dir):
     """Save the current note content to the note_dir
     """
+    goodchars = (' ','.',',','!','?','-','_','+','=','(',')')
     newline = content.find('\n')
     filename = content[:newline]        # should this have a maximum?
+    filename = "".join(x for x in filename if x.isalnum() or x in goodchars)
     filename += '.txt'
 
     if not os.path.exists(note_dir):
