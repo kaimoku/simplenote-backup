@@ -219,6 +219,7 @@ def logsave(key, version, syncnum):
 
 
 def savenotes(username, password, note_dir, verbose):
+    count = 0
     sn = Simplenote(username, password)
     note_list = sn.get_note_list(3)     # remove 3 after testing complete
     if note_list[1] == 0:
@@ -229,11 +230,14 @@ def savenotes(username, password, note_dir, verbose):
                     note_content = note_object[0]['content']
                     filename = savenote(note_content, note_dir)
                     logsave(note['key'], note['version'], note['syncnum'])
+                    count += 1
                     if verbose:
                         print """Note {0} version {1} saved as "{2}" """.format(note['key'], note['version'], filename)
     else:
         print "Unable to get note list. Are your credentials correct?"
         cleanup(1)
+    if count > 0:
+        print "{0} notes saved".format(count)
 
 
 def main():
