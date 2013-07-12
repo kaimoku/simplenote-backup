@@ -75,8 +75,6 @@ def createtable(table_name):
 
 
 def parseOptions():
-    usage = "usage: %prog [options]"
-    #formatter = optparse.IndentedHelpFormatter(width=80, max_help_position=80)
     parser = argparse.ArgumentParser(formatter_class=lambda prog:
                                      argparse.HelpFormatter(prog, max_help_position=80))
     parser.add_argument("-u", "--user", action="store", dest="username",
@@ -92,6 +90,9 @@ def parseOptions():
                         default=False, help="Delete saved options")
     parser.add_argument("--show", action="store_true", dest="show_opts",
                         default=False, help="Show saved options")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        dest="verbose", default=False,
+                        help="Verbose output [defalt=False]")
 
     args = parser.parse_args()
     if args.save_opts:
@@ -106,7 +107,8 @@ def parseOptions():
 
 
 def saveoptions(username, password, note_dir):
-    "Save the options to the <db_file>"
+    """Save the options to the <db_file>
+    """
     if not tableexists(options_table):
         createtable(options_table)
     update_required = False
