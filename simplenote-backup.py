@@ -225,7 +225,7 @@ def logsave(key, version, syncnum):
     conn.commit()
 
 
-def savenotes(username, password, note_dir, verbose):
+def savenotes(username, password, note_dir, verbose, quiet):
     count = 0
     sn = Simplenote(username, password)
     note_list = sn.get_note_list(3)     # remove 3 after testing complete
@@ -238,20 +238,22 @@ def savenotes(username, password, note_dir, verbose):
                     filename = savenote(note_content, note_dir)
                     logsave(note['key'], note['version'], note['syncnum'])
                     count += 1
-                    if verbose:
+                    if not quiet and verbose:
                         print """Note {0} version {1} saved as "{2}" """.format(note['key'], note['version'], filename)
     else:
-        print "Unable to get note list. Are your credentials correct?"
-        cleanup(1)
+        if not quiet:
+            print "Unable to get note list. Are your credentials correct?"
+            cleanup(1)
     if count > 0:
-        print "{0} notes saved".format(count)
+        if not quiet:
+            print "{0} notes saved".format(count)
 
 
 def main():
     init()
     args = parseOptions()
     username, password, note_dir = setparams(args.username, args.password, args.note_dir)
-    savenotes(username, password, note_dir, args.verbose)
+    savenotes(username, password, note_dir, args.verbose, args.quiet)
 
     cleanup(0)
 
