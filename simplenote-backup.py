@@ -98,7 +98,7 @@ def parseOptions():
                         dest="quiet", default=False,
                         help="Suppress all output. Ignored when --show enabled [default=False]")
                         
-    parser.add_argument("-c", action="store", dest="count",
+    parser.add_argument("-c", action="store", dest="count", type=int,
                         metavar="COUNT", help=argparse.SUPPRESS)    # set number of notes to get
 
     args = parser.parse_args()
