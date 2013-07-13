@@ -97,6 +97,9 @@ def parseOptions():
     parser.add_argument("-q", "--quiet", action="store_true",
                         dest="quiet", default=False,
                         help="Suppress all output. Ignored when --show enabled [default=False]")
+                        
+    parser.add_argument("-c", action="store", dest="count",
+                        metavar="COUNT", help=argparse.SUPPRESS)    # set number of notes to get
 
     args = parser.parse_args()
     if args.save_opts:
@@ -152,7 +155,7 @@ def showoptions():
         print output
 
     else:
-        print "No options to show"
+        print "No saved options to show"
 
 
 def dltoptions():
@@ -225,11 +228,21 @@ def logsave(key, version, syncnum):
     conn.commit()
 
 
-def savenotes(username, password, note_dir, verbose, quiet):
+def savenotes(username, password, note_dir, verbose, quiet, num_notes):
     count = 0
     sn = Simplenote(username, password)
-    note_list = sn.get_note_list(3)     # remove 3 after testing complete
+    show_msgs = verbose and not quiet
+    if num_notes is not None:
+        if show_msgs:
+            print "Getting {0} notes".format(num_notes)
+        note_list = sn.get_note_list(num_notes)
+    else:
+        if show_msgs:
+            print "Getting all notes"
+        note_list = sn.get_note_list()
     if note_list[1] == 0:
+        if show_msgs:
+            print "Get Note List successful"
         for note in note_list[0]:
             if note['deleted'] == 0:
                 note_object = sn.get_note(note['key'])
@@ -253,7 +266,7 @@ def main():
     init()
     args = parseOptions()
     username, password, note_dir = setparams(args.username, args.password, args.note_dir)
-    savenotes(username, password, note_dir, args.verbose, args.quiet)
+    savenotes(username, password, note_dir, args.verbose, args.quiet, args.count)
 
     cleanup(0)
 
