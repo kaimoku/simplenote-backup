@@ -113,6 +113,10 @@ def parseOptions():
                         dest="quiet", default=False,
                         help="""Suppress all output.
                              Ignored when --show enabled [default=False]""")
+    parser.add_argument("-f", "--force", action="store_true",
+                        dest="force", default=False,
+                        help="""Force note save (ignore last saved
+                                version number) [default=False]""")
     parser.add_argument("-c", action="store", dest="count", type=int,
                         metavar="COUNT",
                         help=argparse.SUPPRESS)  # number of notes to get
@@ -215,6 +219,20 @@ def setparams(in_username, in_password, in_note_dir):
     return username, password, note_dir
 
 
+def newnoteversion(key, version):
+    """Check passed note key and version against notes_table.
+       Return True if passed version is greater than notes_table version
+    """
+    if tableexists(notes_table):
+        c.execute("""select version from """+notes_table+"""
+                     where key = ?""", [key])
+        row = c.fetchone()
+        if row is not None and row['version'] >= version:
+            output("{0} version {1} not changed".format(key, version))
+            return False
+    return True
+
+
 def savenote(content, note_dir):
     """Save the current note content to the note_dir
     """
@@ -244,7 +262,7 @@ def logsave(key, version, syncnum):
     conn.commit()
 
 
-def savenotes(username, password, note_dir, num_notes):
+def savenotes(username, password, note_dir, num_notes, forcesave):
     count = 0
     sn = Simplenote(username, password)
     if num_notes is not None:
@@ -257,7 +275,7 @@ def savenotes(username, password, note_dir, num_notes):
         output("Get Note List successful")
         output("Saving notes to {0}".format(note_dir))
         for note in note_list[0]:
-            if note['deleted'] == 0:
+            if note['deleted'] == 0 and (forcesave or newnoteversion(note['key'], note['version'])):
                 note_object = sn.get_note(note['key'])
                 if note_object[1] == 0:
                     note_content = note_object[0]['content']
@@ -278,7 +296,7 @@ def main():
     args = parseOptions()
     username, password, note_dir = setparams(args.username, args.password,
                                              args.note_dir)
-    savenotes(username, password, note_dir, args.count)
+    savenotes(username, password, note_dir, args.count, args.force)
     cleanup(0)
 
 
