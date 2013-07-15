@@ -4,7 +4,6 @@ import argparse
 import sqlite3
 import textwrap
 import getpass
-from os.path import expanduser, isfile
 try:
     from simplenote import Simplenote
 except ImportError:
@@ -12,13 +11,24 @@ except ImportError:
     sys.exit(1)
 
 
+def output(text, priority=3):
+    if priority == 1:
+        print text
+    elif priority == 2:
+        if not quiet:
+            print text
+    else:
+        if verbose:
+            print text
+
+
 def init():
     # get configuration file path
     global db_file
-    db_file = expanduser("~/.config/simplenote-backup.db")
+    db_file = os.path.expanduser("~/.config/simplenote-backup.db")
     
     # setup config directory
-    config_dir = expanduser("~/.config/")
+    config_dir = os.path.expanduser("~/.config/")
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
 
@@ -44,7 +54,7 @@ def cleanup(num):
 
 def dbexists():
     "Returns True if db_file exists"
-    return isfile(db_file)
+    return os.path.isfile(db_file)
 
 
 def tableexists(table_name):
@@ -88,9 +98,9 @@ def parseOptions():
                         default=False,
                         help="Save entered options [default=False]")
     parser.add_argument("--delete", action="store_true", dest="dlt_opts",
-                        default=False, help="Delete saved options")
+                        default=False, help="Delete saved options and exit")
     parser.add_argument("--show", action="store_true", dest="show_opts",
-                        default=False, help="Show saved options")
+                        default=False, help="Show saved options and exit")
     parser.add_argument("-v", "--verbose", action="store_true",
                         dest="verbose", default=False,
                         help="Verbose output [default=False]")
@@ -102,8 +112,11 @@ def parseOptions():
                         metavar="COUNT", help=argparse.SUPPRESS)    # set number of notes to get
 
     args = parser.parse_args()
+    global verbose, quiet
+    verbose = args.verbose
+    quiet = args.quiet
     if args.save_opts:
-        saveoptions(args.username, args.password, args.note_dir, args.quiet)
+        saveoptions(args.username, args.password, args.note_dir)
     if args.dlt_opts:
         dltoptions(args.quiet)
         cleanup(0)
@@ -113,7 +126,7 @@ def parseOptions():
     return args
 
 
-def saveoptions(username, password, note_dir, quiet):
+def saveoptions(username, password, note_dir):
     """Save the options to the <db_file>
     """
     if not tableexists(options_table):
@@ -134,11 +147,9 @@ def saveoptions(username, password, note_dir, quiet):
             stmt = stmt[:-1]
         c.execute(stmt)
         conn.commit()
-        if not quiet:
-            print "Options have been saved"
+        output("""Options have been saved""")
     else:
-        if not quiet:
-            print "Nothing to save"
+        output("""Nothing to save""", priority=2)
 
 
 def showoptions():
@@ -146,16 +157,15 @@ def showoptions():
         c.execute("""select username, password, save_directory
                      from %s """ % (options_table))
         row = c.fetchone()
-        output = textwrap.dedent("""\
-                 Saved options
-                    username: %s
-                    password: %s
-                    save directory: %s """ %
-                 (row["username"], row["password"], row["save_directory"]))
-        print output
-
+        out = textwrap.dedent("""\
+              Saved options
+                 username: %s
+                 password: %s
+                 save directory: %s """ %
+              (row["username"], row["password"], row["save_directory"]))
+        output(out, priority=1)
     else:
-        print "No saved options to show"
+        output("No saved options to show", priority=1)
 
 
 def dltoptions():
@@ -164,11 +174,9 @@ def dltoptions():
                      set username = ' ', password = ' ',
                      save_directory = ' '""" % (options_table))
         conn.commit()
-        if not quiet:
-            print "Options have been deleted"
+        output("Options have been deleted", priority=1)
     else:
-        if not quiet:
-            print "No options to delete"
+        output("No options to delete", priority=1)
 
 
 def setparams(in_username, in_password, in_note_dir):
@@ -228,21 +236,17 @@ def logsave(key, version, syncnum):
     conn.commit()
 
 
-def savenotes(username, password, note_dir, verbose, quiet, num_notes):
+def savenotes(username, password, note_dir, num_notes):
     count = 0
     sn = Simplenote(username, password)
-    show_msgs = verbose and not quiet
     if num_notes is not None:
-        if show_msgs:
-            print "Getting {0} notes".format(num_notes)
+        output("Getting {0} notes".format(num_notes))
         note_list = sn.get_note_list(num_notes)
     else:
-        if show_msgs:
-            print "Getting all notes"
+        output("Getting all notes")
         note_list = sn.get_note_list()
     if note_list[1] == 0:
-        if show_msgs:
-            print "Get Note List successful"
+        output("Get Note List successful")
         for note in note_list[0]:
             if note['deleted'] == 0:
                 note_object = sn.get_note(note['key'])
@@ -251,22 +255,19 @@ def savenotes(username, password, note_dir, verbose, quiet, num_notes):
                     filename = savenote(note_content, note_dir)
                     logsave(note['key'], note['version'], note['syncnum'])
                     count += 1
-                    if not quiet and verbose:
-                        print """Note {0} version {1} saved as "{2}" """.format(note['key'], note['version'], filename)
+                    output("""Note {0} version {1} saved as "{2}" """.format(note['key'], note['version'], filename))
     else:
-        if not quiet:
-            print "Unable to get note list. Are your credentials correct?"
-            cleanup(1)
+        output("Unable to get note list. Are your credentials correct?", priority=1)
+        cleanup(1)
     if count > 0:
-        if not quiet:
-            print "{0} notes saved".format(count)
+        output("{0} notes saved".format(count), priority=2)
 
 
 def main():
     init()
     args = parseOptions()
     username, password, note_dir = setparams(args.username, args.password, args.note_dir)
-    savenotes(username, password, note_dir, args.verbose, args.quiet, args.count)
+    savenotes(username, password, note_dir, args.count)
 
     cleanup(0)
 
