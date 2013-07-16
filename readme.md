@@ -1,1 +1,3 @@
-#simplenote-backup.py - save Simplenote notes as text files
+#simplenote-backup.py
+##Save Simplenote notes as text files
+
